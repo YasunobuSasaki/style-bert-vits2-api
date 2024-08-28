@@ -13,7 +13,7 @@ import base64
 from fastapi.responses import JSONResponse
 import io
 import uvicorn
-
+import os
 ####### style_bert_vits2の初期化処理
 
 # モデルとトークナイザーをロード
@@ -32,7 +32,7 @@ class InferRequest(BaseModel):
 
 @app.post("/infer")
 async def infer(infer_request: InferRequest):
-    assets_root = Path("model_assets")
+    assets_root = Path(os.getenv("ASSET_ROOT"))
     model_dir = assets_root / infer_request.model
     
     # モデルがキャッシュに存在するか確認
