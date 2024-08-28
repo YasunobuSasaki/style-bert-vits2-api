@@ -20,6 +20,8 @@ import uvicorn
 bert_models.load_model(Languages.JP, "ku-nlp/deberta-v2-large-japanese-char-wwm")
 bert_models.load_tokenizer(Languages.JP, "ku-nlp/deberta-v2-large-japanese-char-wwm")
 
+# グローバルキャッシュ用の辞書
+model_cache = {}
 
 ###### APIサーバーの処理
 app = FastAPI()
@@ -32,12 +34,20 @@ class InferRequest(BaseModel):
 async def infer(infer_request: InferRequest):
     assets_root = Path("model_assets")
     model_dir = assets_root / infer_request.model
-    model = TTSModel(
-        model_path=model_dir / "model.safetensors",
-        config_path=model_dir / "config.json",
-        style_vec_path=model_dir / "style_vectors.npy",
-        device="cpu",
-    )
+    
+    # モデルがキャッシュに存在するか確認
+    if infer_request.model in model_cache:
+        model = model_cache[infer_request.model]
+    else:
+        model = TTSModel(
+            model_path=model_dir / "model.safetensors",
+            config_path=model_dir / "config.json",
+            style_vec_path=model_dir / "style_vectors.npy",
+            device="cpu",
+        )
+        # キャッシュに保存
+        model_cache[infer_request.model] = model
+    
     sr, audio = model.infer(text=infer_request.text)
     audio_io = io.BytesIO()
     sf.write(audio_io, audio, sr, format='WAV')
