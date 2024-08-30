@@ -1,5 +1,5 @@
 model_assets
-audio.wav
+*.wav
 memo.txt
 .env
 .vscode

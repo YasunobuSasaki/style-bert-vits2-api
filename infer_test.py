@@ -41,7 +41,7 @@ model = TTSModel(
     device=os.getenv("MODE"),
 )
 
-sr, audio = model.infer(text="こんにちは！げんきっすかー？私は元気よ")
+sr, audio = model.infer(text="こんにちは！")
 
 audio_path = "audio.wav"
 # 音声ファイルを保存
