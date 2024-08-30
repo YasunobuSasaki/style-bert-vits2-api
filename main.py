@@ -44,7 +44,9 @@ model_cache = {}
 assets_root = Path(os.getenv("ASSET_ROOT"))
 
 # assets_root下のディレクトリを全部ロード
-for model_dir in assets_root.iterdir():
+from concurrent.futures import ThreadPoolExecutor
+
+def load_model(model_dir):
     if model_dir.is_dir():
         model_name = model_dir.name
         # model_dir内の.safetensorsを検索し、はじめに見つかったファイルをmodel_pathとして取得
@@ -53,11 +55,11 @@ for model_dir in assets_root.iterdir():
             model_path = file
             break
         if model_path is None:
-            continue
+            return
         config_path = model_dir / "config.json"
         style_vec_path = model_dir / "style_vectors.npy"
         if not config_path.exists() or not style_vec_path.exists():
-            continue
+            return
         
         model = TTSModel(
             model_path=model_path,
@@ -69,6 +71,9 @@ for model_dir in assets_root.iterdir():
         # キャッシュに保存
         print(f"モデル {model_name} をloadしました。")
         model_cache[model_name] = model
+
+with ThreadPoolExecutor() as executor:
+    executor.map(load_model, assets_root.iterdir())
 
 
 # メモリ使用量をログに記録
