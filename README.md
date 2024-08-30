@@ -40,15 +40,21 @@ k6 run --vus 10 --duration 30s load_test.js
 GCPの
 1 x NVIDIA T4
 n1-standard-8
-で上記程度の負荷であれば全然余裕。
+で上記程度の負荷であれば余裕。
 
 <img width="832" alt="image" src="https://github.com/user-attachments/assets/f42f154c-da9e-42d7-99d0-e873e2adaedd">
 
-
+<img width="678" alt="image" src="https://github.com/user-attachments/assets/16e6183f-2fb5-4161-8bec-60937463d161">
 
 <img width="482" alt="image" src="https://github.com/user-attachments/assets/647b57e6-ea52-48df-bb23-cbe3c655cfdf">
 
+
+
+
 メモリも全然問題なし。事前学習モデルのパターン増えない限り
 モデルを追加しても影響ない。
+```
+2024-08-30 02:39:34,123 - INFO - メモリ使用量: RSS=2998.18 MB, VMS=17684.30 MB
+```
 
 
