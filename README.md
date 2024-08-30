@@ -58,10 +58,10 @@ n1-standard-8
 ```
 
 # 費用感
-¥82,154 / month
+大体1インスタスこれくらい。
+¥50,080 / month
 
-もっとスペック下げてもいいかもしれない。
-https://cloud.google.com/products/calculator?hl=ja&dl=CiQzZjIwMTFlOS05OWU5LTQyZjItOTQ0Zi0yNzllNTAwMzdiNzUQCBokNjEwQTU3NzgtQzNEQy00MTE4LUI2N0QtRUQ2OEY4Q0NGNEU2
+https://cloud.google.com/products/calculator?hl=ja&dl=CiQzYjlkNGI0ZC0zNzY4LTQ4YzMtOTFiOC0yNDc5NzdjMDRlYTMQCBokNjEwQTU3NzgtQzNEQy00MTE4LUI2N0QtRUQ2OEY4Q0NGNEU2
 
 
 
