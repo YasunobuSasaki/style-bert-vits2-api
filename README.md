@@ -40,7 +40,7 @@ k6 run --vus 10 --duration 30s load_test.js
 GCPの
 1 x NVIDIA T4
 n1-standard-8
-で上記程度の負荷であれば余裕。
+で上記程度の負荷であれば許容範囲(たまに4秒くらいかかっちゃうけど。大体1秒程度
 
 <img width="832" alt="image" src="https://github.com/user-attachments/assets/f42f154c-da9e-42d7-99d0-e873e2adaedd">
 
