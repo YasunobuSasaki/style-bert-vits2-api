@@ -99,6 +99,12 @@ async def infer(infer_request: InferRequest):
     return JSONResponse(content={"audio_base64": audio_base64})
 
 
+@app.get("/models")
+async def get_model_list():
+    model_list = list(model_cache.keys())
+    return JSONResponse(content={"models": model_list})
+
+
 def get_model(model_name: str):
     if model_name in model_cache:
         return model_cache[model_name]
@@ -107,4 +113,4 @@ def get_model(model_name: str):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=os.getenv("PORT"))
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT")))

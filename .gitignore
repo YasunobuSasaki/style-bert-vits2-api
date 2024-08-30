@@ -4,3 +4,4 @@ memo.txt
 .env
 .vscode
 *.log
+.DS_Store

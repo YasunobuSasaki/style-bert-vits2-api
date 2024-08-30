@@ -8,6 +8,7 @@ vscodeでコンテナ起動して開発してください。
 ```
 ASSET_ROOT=/app/model_assets
 MODE=cpu # gpu使えるならcuda 
+PORT=8000
 ```
 
 # モデルの設定
@@ -28,3 +29,15 @@ api_call_sample.py を参照。
 
 # deploy
 各環境毎に上記の設定をしてください。
+
+
+# 負荷試験
+どれくらいパフォーマンス出るかk6のテストコード用意してあります。
+```
+k6 run --vus 10 --duration 30s load_test.js
+```
+
+GCPの
+1 x NVIDIA T4
+n1-standard-8
+で上記程度の負荷であれば全然余裕。
