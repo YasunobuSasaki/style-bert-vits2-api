@@ -1,6 +1,7 @@
 # Hugging Faceから試しにデフォルトモデルをダウンロードしてみて、それを音声合成に使ってみる
 # model_assetsディレクトリにダウンロードされます
 
+import os
 from pathlib import Path
 from huggingface_hub import hf_hub_download
 from style_bert_vits2.tts_model import TTSModel
@@ -37,7 +38,7 @@ model = TTSModel(
     model_path=assets_root / model_file,
     config_path=assets_root / config_file,
     style_vec_path=assets_root / style_file,
-    device="cpu",
+    device=os.getenv("MODE"),
 )
 
 sr, audio = model.infer(text="こんにちは！げんきっすかー？私は元気よ")

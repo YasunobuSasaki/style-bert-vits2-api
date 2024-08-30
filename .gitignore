@@ -3,3 +3,4 @@ audio.wav
 memo.txt
 .env
 .vscode
+*.log

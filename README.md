@@ -7,6 +7,7 @@ vscodeでコンテナ起動して開発してください。
 開発する場合は.envに下記を記載してdocker-compose経由で起動して実行。
 ```
 ASSET_ROOT=/app/model_assets
+MODE=cpu # gpu使えるならcuda 
 ```
 
 # モデルの設定
@@ -18,7 +19,7 @@ ASSET_ROOTの下に model名のフォルダを配置
 ASSET_ROOT/
     model名/
         config.json
-        model.safetensors
+        ○○○.safetensors
         style_vectors.npy
 ```
 

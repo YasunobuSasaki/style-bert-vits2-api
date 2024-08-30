@@ -14,6 +14,23 @@ from fastapi.responses import JSONResponse
 import io
 import uvicorn
 import os
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+import psutil
+import logging
+
+
+# ログの設定
+logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# メモリ使用量をログに記録する関数
+def log_memory_usage():
+    process = psutil.Process(os.getpid())
+    mem_info = process.memory_info()
+    logging.info(f"メモリ使用量: RSS={mem_info.rss / (1024 * 1024):.2f} MB, VMS={mem_info.vms / (1024 * 1024):.2f} MB")
+
 ####### style_bert_vits2の初期化処理
 
 # モデルとトークナイザーをロード
@@ -22,6 +39,40 @@ bert_models.load_tokenizer(Languages.JP, "ku-nlp/deberta-v2-large-japanese-char-
 
 # グローバルキャッシュ用の辞書
 model_cache = {}
+
+# アセットの配置場所
+assets_root = Path(os.getenv("ASSET_ROOT"))
+
+# assets_root下のディレクトリを全部ロード
+for model_dir in assets_root.iterdir():
+    if model_dir.is_dir():
+        model_name = model_dir.name
+        # model_dir内の.safetensorsを検索し、はじめに見つかったファイルをmodel_pathとして取得
+        model_path = None
+        for file in model_dir.glob("*.safetensors"):
+            model_path = file
+            break
+        if model_path is None:
+            continue
+        config_path = model_dir / "config.json"
+        style_vec_path = model_dir / "style_vectors.npy"
+        if not config_path.exists() or not style_vec_path.exists():
+            continue
+        
+        model = TTSModel(
+            model_path=model_path,
+            config_path=model_dir / "config.json",
+            style_vec_path=model_dir / "style_vectors.npy",
+            device=os.getenv("MODE"),
+        )
+        model.infer(text="あ")
+        # キャッシュに保存
+        print(f"モデル {model_name} をloadしました。")
+        model_cache[model_name] = model
+
+
+# メモリ使用量をログに記録
+log_memory_usage()
 
 ###### APIサーバーの処理
 app = FastAPI()
@@ -32,30 +83,23 @@ class InferRequest(BaseModel):
 
 @app.post("/infer")
 async def infer(infer_request: InferRequest):
-    assets_root = Path(os.getenv("ASSET_ROOT"))
-    model_dir = assets_root / infer_request.model
-    
-    # モデルがキャッシュに存在するか確認
-    if infer_request.model in model_cache:
-        model = model_cache[infer_request.model]
-    else:
-        model = TTSModel(
-            model_path=model_dir / "model.safetensors",
-            config_path=model_dir / "config.json",
-            style_vec_path=model_dir / "style_vectors.npy",
-            device="cpu",
-        )
-        # キャッシュに保存
-        model_cache[infer_request.model] = model
-    
+    model = get_model(infer_request.model)
+    if model is None:
+        return JSONResponse(content={"message": f"モデル {infer_request.model} は存在しません。"}, status_code=404)
     sr, audio = model.infer(text=infer_request.text)
     audio_io = io.BytesIO()
     sf.write(audio_io, audio, sr, format='WAV')
     audio_io.seek(0)
-    
     audio_base64 = base64.b64encode(audio_io.read()).decode('utf-8')
-    
     return JSONResponse(content={"audio_base64": audio_base64})
 
+
+def get_model(model_name: str):
+    if model_name in model_cache:
+        return model_cache[model_name]
+    else:
+        return None
+
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8005)
