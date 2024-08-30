@@ -41,3 +41,14 @@ GCPの
 1 x NVIDIA T4
 n1-standard-8
 で上記程度の負荷であれば全然余裕。
+
+<img width="832" alt="image" src="https://github.com/user-attachments/assets/f42f154c-da9e-42d7-99d0-e873e2adaedd">
+
+
+
+<img width="482" alt="image" src="https://github.com/user-attachments/assets/647b57e6-ea52-48df-bb23-cbe3c655cfdf">
+
+メモリも全然問題なし。事前学習モデルのパターン増えない限り
+モデルを追加しても影響ない。
+
+
