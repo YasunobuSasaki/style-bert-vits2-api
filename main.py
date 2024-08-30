@@ -20,8 +20,8 @@ load_dotenv()
 
 import psutil
 import logging
-
-
+import socketio
+import json
 # ログの設定
 logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -48,29 +48,34 @@ from concurrent.futures import ThreadPoolExecutor
 
 def load_model(model_dir):
     if model_dir.is_dir():
-        model_name = model_dir.name
-        # model_dir内の.safetensorsを検索し、はじめに見つかったファイルをmodel_pathとして取得
-        model_path = None
-        for file in model_dir.glob("*.safetensors"):
-            model_path = file
-            break
-        if model_path is None:
-            return
-        config_path = model_dir / "config.json"
-        style_vec_path = model_dir / "style_vectors.npy"
-        if not config_path.exists() or not style_vec_path.exists():
-            return
-        
-        model = TTSModel(
-            model_path=model_path,
-            config_path=model_dir / "config.json",
-            style_vec_path=model_dir / "style_vectors.npy",
-            device=os.getenv("MODE"),
-        )
-        model.infer(text="あ")
-        # キャッシュに保存
-        print(f"モデル {model_name} をloadしました。")
-        model_cache[model_name] = model
+        try:
+            model_name = model_dir.name
+            # model_dir内の.safetensorsを検索し、はじめに見つかったファイルをmodel_pathとして取得
+            model_path = None
+            for file in model_dir.glob("*.safetensors"):
+                model_path = file
+                break
+            if model_path is None:
+                print(f"モデル {model_name} は存在しません。")
+                return
+            config_path = model_dir / "config.json"
+            style_vec_path = model_dir / "style_vectors.npy"
+            if not config_path.exists() or not style_vec_path.exists():
+                print(f"モデル {model_name} は存在しません。")
+                return
+            
+            model = TTSModel(
+                model_path=model_path,
+                config_path=model_dir / "config.json",
+                style_vec_path=model_dir / "style_vectors.npy",
+                device=os.getenv("MODE"),
+            )
+            model.infer(text="あ")
+            # キャッシュに保存
+            print(f"モデル {model_name} をloadしました。")
+            model_cache[model_name] = model
+        except Exception as e:
+            print(f"モデル {model_name} のロード中にエラーが発生しました: {str(e)}")
 
 with ThreadPoolExecutor() as executor:
     executor.map(load_model, assets_root.iterdir())
@@ -111,6 +116,45 @@ def get_model(model_name: str):
     else:
         return None
 
+## socketio
+sio = socketio.AsyncServer(async_mode='asgi')
+app_socketio = socketio.ASGIApp(sio, other_asgi_app=app)
+
+@sio.event
+async def connect(sid, environ):
+    await sio.emit('接続完了', {'メッセージ': 'サーバーに接続しました'}, room=sid)
+    print('connect ', sid)
+
+@sio.event
+async def disconnect(sid):
+    await sio.emit('接続解除', {'メッセージ': 'サーバーから切断しました'}, room=sid)
+    print('disconnect ', sid)
+
+class InferRequestSocket(BaseModel):
+    key: str
+    model: str
+    text: str
+@sio.event
+async def message(sid, data):
+    print(sid)
+    try:
+        data = json.loads(data)
+        infer_request = InferRequest(model=data['model'], text=data['text'])
+        model = get_model(infer_request.model)
+        if model is None:
+            await sio.emit('error', {'メッセージ': f'モデル {infer_request.model} は存在しません。'}, room=sid)
+            return
+        sr, audio = model.infer(text=infer_request.text)
+        audio_io = io.BytesIO()
+        sf.write(audio_io, audio, sr, format='WAV')
+        audio_io.seek(0)
+        audio_base64 = base64.b64encode(audio_io.read()).decode('utf-8')
+        await sio.emit('infer', {'audio_base64': audio_base64, 'key': data['key']}, room=sid)
+    except Exception as e:
+        await sio.emit('error', {'メッセージ': '推論中にエラーが発生しました。', '詳細': str(e)}, room=sid)
+
+
+
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT")))
+    uvicorn.run(app_socketio, host="0.0.0.0", port=int(os.getenv("PORT")))
