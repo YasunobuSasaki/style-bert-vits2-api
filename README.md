@@ -30,6 +30,18 @@ api_call_sample.py を参照。
 # deploy
 各環境毎に上記の設定をしてください。
 
+gunicorn_config_prod.py を参照。
+
+
+```
+# 起動
+sudo gunicorn -c gunicorn_config_prod.py main:app
+
+# 停止
+ps aux | grep style-bert-vits2-api | grep -v grep | awk '{print $2}' | xargs sudo kill
+
+```
+
 
 # 負荷試験
 どれくらいパフォーマンス出るかk6のテストコード用意してあります。

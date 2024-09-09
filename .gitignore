@@ -5,3 +5,6 @@ memo.txt
 .vscode
 *.log
 .DS_Store
+logs
+*.pem
+__pycache__
