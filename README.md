@@ -31,14 +31,20 @@ api_call_sample.py を参照。
 各環境毎に上記の設定をしてください。
 
 gunicorn_config_prod.py を参照。
+ワーカー数が環境によって変えてください。
 
 
 ```
+pip install gunicorn
+pip install setproctitle
+
+# log dir 作成　
+mkdir logs
 # 起動
-sudo gunicorn -c gunicorn_config_prod.py main:app
+gunicorn -c gunicorn_config_prod.py main:app
 
 # 停止
-ps aux | grep style-bert-vits2-api | grep -v grep | awk '{print $2}' | xargs sudo kill
+kill `cat prod.pid`
 
 ```
 
