@@ -28,10 +28,11 @@ ASSET_ROOT/
 api_call_sample.py を参照。
 
 # deploy
+Dockerを参考にしつつ
 各環境毎に上記の設定をしてください。
 
 gunicorn_config_prod.py を参照。
-ワーカー数が環境によって変えてください。
+ワーカー数を環境によって変えてください。
 
 
 ```
