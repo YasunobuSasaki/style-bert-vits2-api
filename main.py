@@ -2,6 +2,8 @@
 # model_assetsディレクトリにダウンロードされます
 
 from pathlib import Path
+import subprocess
+import tempfile
 from huggingface_hub import hf_hub_download
 from style_bert_vits2.tts_model import TTSModel
 from pydantic import BaseModel
@@ -93,14 +95,35 @@ class InferRequest(BaseModel):
 
 @app.post("/infer")
 async def infer(infer_request: InferRequest):
-    model = get_model(infer_request.model)
+    model: TTSModel = get_model(infer_request.model)
     if model is None:
         return JSONResponse(content={"message": f"モデル {infer_request.model} は存在しません。"}, status_code=404)
     sr, audio = model.infer(text=infer_request.text)
     audio_io = io.BytesIO()
     sf.write(audio_io, audio, sr, format='WAV')
     audio_io.seek(0)
-    audio_base64 = base64.b64encode(audio_io.read()).decode('utf-8')
+  
+    
+    # audio_base64 = base64.b64encode(audio_io.read()).decode('utf-8')
+    # audio_io.seek(0)
+    audio_base64 = ""
+    
+    # 一時ファイルにWAVを書き込む
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_wav:
+        temp_wav.write(audio_io.read())
+        temp_wav_path = temp_wav.name
+
+    # 一時ファイルにMP3を書き込む
+    temp_mp3_path = temp_wav_path.replace(".wav", ".mp3")
+    subprocess.run(["ffmpeg", "-i", temp_wav_path, "-acodec", "mp3", temp_mp3_path], check=True)
+
+    # MP3ファイルを読み込んでBase64にエンコード
+    with open(temp_mp3_path, "rb") as temp_mp3:
+        audio_base64 = base64.b64encode(temp_mp3.read()).decode('utf-8')
+
+    # 一時ファイルを削除
+    os.remove(temp_wav_path)
+    os.remove(temp_mp3_path)
     return JSONResponse(content={"audio_base64": audio_base64})
 
 
