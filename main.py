@@ -92,12 +92,11 @@ app = FastAPI()
 class InferRequest(BaseModel):
     model: str
     text: str
+    format: str = "mp3"
 
 @app.post("/infer")
 async def infer(infer_request: InferRequest):
     model: TTSModel = get_model(infer_request.model)
-    if model is None:
-        return JSONResponse(content={"message": f"モデル {infer_request.model} は存在しません。"}, status_code=404)
     sr, audio = model.infer(text=infer_request.text)
     audio_io = io.BytesIO()
     sf.write(audio_io, audio, sr, format='WAV')
@@ -107,6 +106,9 @@ async def infer(infer_request: InferRequest):
     # audio_base64 = base64.b64encode(audio_io.read()).decode('utf-8')
     # audio_io.seek(0)
     audio_base64 = ""
+    if infer_request.format == "wav":
+        audio_base64 = base64.b64encode(audio_io.read()).decode('utf-8')
+        return JSONResponse(content={"audio_base64": audio_base64, "format": "wav"})
     
     # 一時ファイルにWAVを書き込む
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_wav:
@@ -124,7 +126,7 @@ async def infer(infer_request: InferRequest):
     # 一時ファイルを削除
     os.remove(temp_wav_path)
     os.remove(temp_mp3_path)
-    return JSONResponse(content={"audio_base64": audio_base64})
+    return JSONResponse(content={"audio_base64": audio_base64, "format": "mp3"})
 
 
 @app.get("/models")
